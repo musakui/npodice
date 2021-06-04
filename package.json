@@ -1,0 +1,20 @@
+{
+  "name": "npodice",
+  "version": "0.0.1",
+  "description": "dice game",
+  "license": "MIT",
+  "author": "randName()",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^2.3.5"
+  },
+  "dependencies": {
+    "@babylonjs/core": "^4.2.0",
+    "@babylonjs/gui": "^4.2.0",
+    "@babylonjs/loaders": "^4.2.0"
+  }
+}
