@@ -1,77 +1,62 @@
-import { Vector3 } from '@babylonjs/core/Maths/math.vector'
+import { Vector3, Vector4 } from '@babylonjs/core/Maths/math.vector'
 import { SpotLight } from '@babylonjs/core/Lights/spotLight'
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight'
 
+import '@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent'
+import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator'
+
 import { BoxBuilder } from '@babylonjs/core/Meshes/Builders/boxBuilder'
-import { GroundBuilder } from '@babylonjs/core/Meshes/Builders/groundBuilder'
-//import { RibbonBuilder } from '@babylonjs/core/Meshes/Builders/ribbonBuilder'
 
-import { PhysicsImpostor } from '@babylonjs/core/Physics/physicsImpostor'
+import { tatami, diceMaterial } from './materials.js'
 
-import { wood } from './materials.js'
+const skylight = new HemisphericLight('skylight', new Vector3(-0.4, 1, -0.4))
+skylight.intensity = 0.1
 
-const impOpts = { mass: 0, friction: 0.9, restitution: 0.8 }
+const spotlight = new SpotLight('spotlight', new Vector3(0, 70, 0), new Vector3(0, -1, 0), 1.5, 1)
+spotlight.intensity = 0.7
 
-const bowlGen = (size, length = 150) => {
-  const half = (length - 1) / 2
-  const sc = Math.PI / 2 / half
-  const scale = size / length
-  const h = (x, z) => (Math.hypot(x, z) > half) ? 0 : (Math.cos(x * sc) + Math.cos(z * sc))
-  const v = (x, z) => {
-    const ht = h(x, z)
-    return new Vector3(x * scale, ht ? (4.9 - 2.25 * ht) : -0.1, z * scale)
-  }
-  return Array.from({ length }, (_, i) => Array.from({ length }, (_, j) => v(i - half, j - half)))
-}
+export const shadows = new ShadowGenerator(2048, spotlight)
+shadows.usePoissonSampling = true
 
-export function makeRoom() {
-  const skylight = new HemisphericLight('skylight', new Vector3(-0.4, 1, -0.4))
-  skylight.intensity = 0.1
+export const floor = BoxBuilder.CreateBox('floor', { width: 100, height: 0.1, depth: 100 })
+floor.position.y = -0.7
+floor.material = tatami
+floor.receiveShadows = true
 
-  const spotlight = new SpotLight('spotlight', new Vector3(0, 50, 0), new Vector3(0, -1, 0), Math.PI / 6, 2)
-  spotlight.intensity = 0.3
-
-  const walls = Array.from({ length: 4 }, (_, i) => {
-    const w = GroundBuilder.CreateGround('w', { width: 50, height: 50 })
-    w.material = wood
-    w.position.y = 25
-    w.rotation.x = Math.PI / 2
-    w.rotation.y = i * Math.PI / 2
-    w.physicsImpostor = new PhysicsImpostor(w, PhysicsImpostor.BoxImpostor, impOpts)
-    return w
+export const bowlColliders = Array.from({ length: 11 }, (_, i) => {
+  const depth = 0.6
+  const r = i * 0.5 + 1.5
+  const width = i < 3 ? 0.5 : 1
+  const ht = Math.pow(i / 3.2, 2) * 0.2 + 0.3
+  const segments = Math.ceil(r * 2 * Math.PI / width)
+  const sAngle = Math.PI * 2 / segments
+  const tilt = -r / 10
+  return Array.from({ length: segments }, (_, s) => {
+    const c = BoxBuilder.CreateBox(`base-${s}`, { width, height: 0.1, depth })
+    const a = s * sAngle
+    c.rotation.y = a
+    c.rotation.x = tilt
+    c.position.y = ht
+    c.visibility = false
+    c.position.x = r * Math.sin(a)
+    c.position.z = r * Math.cos(a)
+    return c
   })
-  walls[0].position.z = -25
-  walls[1].position.x = -25
-  walls[2].position.z = 25
-  walls[3].position.x = 25
+}).flat()
+bowlColliders.unshift(BoxBuilder.CreateBox('cent', { width: 2, height: 0.7, depth: 2 }))
+bowlColliders[0].visibility = false
 
-  const floor = GroundBuilder.CreateGround('floor', { width: 70, height: 70 })
-  floor.position.y = -0.6
-  floor.material = wood
-  floor.physicsImpostor = new PhysicsImpostor(floor, PhysicsImpostor.BoxImpostor, impOpts)
+const faceUV = Array.from({ length: 6 }, (_, i) => new Vector4(i / 6, 0, (i + 1) / 6, 1))
+export const dice = Array.from({ length: 10 }, (_, i) => {
+  const d = BoxBuilder.CreateBox('die', { size: 1, faceUV, wrap: true })
+  d.position.y = -5
+  d.position.x = i * 5
+  d.material = diceMaterial
+  shadows.addShadowCaster(d)
+  return d
+})
 
-  const cent = BoxBuilder.CreateBox('cent', { width: 2, height: 0.7, depth: 2 })
-  cent.physicsImpostor = new PhysicsImpostor(cent, PhysicsImpostor.BoxImpostor, impOpts)
-  cent.visibility = false
-
-  Array.from({ length: 11 }, (_, i) => {
-    const depth = 0.6
-    const r = i * 0.5 + 1.5
-    const width = i < 3 ? 0.5 : 1
-    const height = Math.pow(i / 3.2, 2) * 0.2 + 0.3
-    const segments = Math.ceil(r * 2 * Math.PI / width)
-    const scaleAngle = Math.PI * 2 / segments
-    const tilt = -r / 10
-    Array.from({ length: segments }, (_, c) => {
-      const cb = BoxBuilder.CreateBox(`base-${c}`, { width, height: 0.1, depth })
-      const a = c * scaleAngle
-      cb.rotation.y = a
-      cb.rotation.x = tilt
-      cb.position.x = r * Math.sin(a)
-      cb.position.z = r * Math.cos(a)
-      cb.position.y = height
-      cb.visibility = false
-      cb.physicsImpostor = new PhysicsImpostor(cb, PhysicsImpostor.BoxImpostor, impOpts)
-    })
-  })
-}
+import('./models.js').then(async (m) => {
+  const { bowl, dice } = await m.load()
+  shadows.addShadowCaster(bowl.meshes[0])
+})

@@ -1,11 +1,12 @@
 import '@babylonjs/loaders/glTF'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 
-export async function loadModels () {
-  SceneLoader.Append('/bowl.gltf')
-  /*
-  SceneLoader.ImportMesh('', '/assets/', 'dice.gltf', scene, (m) => {
-    console.log(m)
-  })
-  */
+export async function load () {
+  const bowl = await SceneLoader.ImportMeshAsync('', '/bowl.gltf')
+  // const dice = SceneLoader.ImportMeshAsync('', '/dice.gltf'
+
+  return {
+    bowl,
+    dice: null,
+  }
 }
