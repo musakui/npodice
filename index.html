@@ -7,9 +7,40 @@
   <title>NpoDice</title>
   <script src="/cannon.min.js"></script>
   <style>
-  html, body { overflow: hidden; width: 100%; height: 100%; margin: 0; padding: 0; background-color: #000; }
+  html, body {
+    overflow: hidden; width: 100%; height: 100%; margin: 0; padding: 0;
+    font-family: monospace; color: #fff; background-color: #000;
+  }
   canvas { width: 100%; height: 100%; touch-action: none; }
+  rect { fill: #eee; }
+  nav { position: fixed; padding: 10px; width: 100px; }
+  ul { display: none; clear: both; transition: max-height .2s ease-out; list-style: none; }
+  ul > li { position: relative; left: -40px; }
+  #togg { display: none; }
+  #togg:checked ~ ul { display: block; }
+  a {
+    display: block; margin: 10px; padding: 10px; width: 50px;
+    color: #fff; text-decoration: none; border: 2px solid white;
+  }
+  #app { position: absolute; margin: 0; height: 99vh; width: 99vw; pointer-events: none; }
   </style>
  </head>
- <body><script type="module" src="/src/index.js"></script></body>
+ <body>
+   <nav role="navigation">
+     <input id="togg" type="checkbox" class="togg" />
+     <label class="hamburg" for="togg">
+       <svg viewBox="0 0 100 80" width="30" height="30">
+         <rect width="80" height="10" rx="8"></rect>
+         <rect width="80" height="10" rx="8" y="30"></rect>
+         <rect width="80" height="10" rx="8" y="60"></rect>
+       </svg>
+     </label>
+     <ul>
+       <li><a href="#">RULE</a></li>
+       <li><a href="https://github.com/musakui/npodice">SOURCE</a></li>
+     </ul>
+   </nav>
+   <div id="app"></div>
+   <script type="module" src="/src/index.js"></script>
+ </body>
 </html>
