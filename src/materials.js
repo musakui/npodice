@@ -29,4 +29,7 @@ tatami.bumpTexture.uScale = 7
 tatami.bumpTexture.vScale = 6.5
 
 export const diceMaterial = new StandardMaterial('diceMaterial')
+diceMaterial.roughness = 1
+diceMaterial.specularColor = new Color3(0, 0, 0)
 diceMaterial.diffuseTexture = new Texture(diceUrl)
+diceMaterial.diffuseTexture.hasAlpha = true

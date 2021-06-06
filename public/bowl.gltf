@@ -1,30 +1,29 @@
 {
   "asset": {
-    "extras": {
-      "author": "MIKErowaveoven (https://sketchfab.com/mikerowaveoven)",
-      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
-      "source": "https://sketchfab.com/3d-models/wooden-bowl-6b8ba20399c5430d8655a0634bf702b6",
-      "title": "Wooden Bowl"
-    },
+    "generator": "Khronos glTF Blender I/O v1.4.40",
     "version": "2.0"
   },
   "scene": 0,
-  "scenes": [{ "name": "scene", "nodes": [1] }],
-  "nodes": [
-    { "mesh": 0, "name": "bowl" },
-    { "name": "root", "children": [0], "scale": [3, 3, 2], "rotation": [-0.7, 0, 0, 0.7] }
+  "nodes": [{ "mesh": 0 }],
+  "scenes": [{ "nodes": [0] }],
+  "samplers": [{ "magFilter": 9729, "minFilter": 9986 }],
+  "textures" : [
+    { "sampler": 0, "source": 1 },
+    { "sampler": 0, "source": 2 },
+    { "sampler": 0, "source": 0 }
   ],
-  "images": [{ "uri": "bowl-texture.jpg" }],
-  "buffers": [{ "byteLength": 2383360,"uri": "bowl.bin" }],
-  "textures": [{ "sampler": 0, "source": 0 }],
-  "samplers": [{ "magFilter": 9729, "minFilter": 9987, "wrapS": 10497, "wrapT": 10497 }],
+  "images": [
+    { "uri": "bowl_base.jpg" },
+    { "uri": "bowl_normal.png" },
+    { "uri": "bowl_metallic.png" }
+  ],
   "materials": [
     {
-      "name": "wood", "doubleSided": true, "emissiveFactor": [0, 0, 0],
+      "normalTexture": { "index": 0, "texCoord": 0 },
+      "occlusionTexture": { "index": 1, "texCoord": 0 },
       "pbrMetallicRoughness": {
-        "metallicFactor": 0, "roughnessFactor": 0.6,
-        "baseColorFactor": [0.7, 0.7, 0.7, 1],
-        "baseColorTexture": { "index": 0, "texCoord": 0 }
+        "baseColorTexture": { "index": 2, "texCoord": 0 },
+        "metallicRoughnessTexture": { "index": 1, "texCoord": 0 }
       }
     }
   ],
@@ -33,7 +32,7 @@
       "name": "bowl",
       "primitives": [
         {
-          "mode": 4, "indices": 3, "material": 0,
+          "indices": 3, "material": 0,
           "attributes": { "POSITION": 0, "NORMAL": 1, "TEXCOORD_0": 2 }
         }
       ]
@@ -41,35 +40,18 @@
   ],
   "accessors": [
     {
-      "bufferView": 2, "componentType": 5126, "count": 62720,
-      "max": [2.39, 2.38, 1.31], "min": [-2.39, -2.38, -0.053], "type": "VEC3"
+      "bufferView": 0, "componentType": 5126, "type": "VEC3", "count": 71214,
+      "max": [7.2, 2.7, 7.2], "min": [-7.2, 0, -7]
     },
-    {
-      "bufferView": 2, "byteOffset": 752640, "componentType": 5126, "count": 62720,
-      "max": [0.9895, 0.9996, 0.9999], "min": [-0.9893, -0.9996, -0.9999], "type": "VEC3"
-    },
-    {
-      "bufferView": 1, "componentType": 5126, "count": 62720,
-      "max": [0.563, 0.993], "min": [0.009, 0.011], "type": "VEC2"
-    },
-    {
-      "bufferView": 0, "componentType": 5125, "count": 94080,
-      "max": [62719], "min": [0], "type": "SCALAR"
-    }
+    { "bufferView": 1, "componentType": 5126, "type": "VEC3", "count": 71214 },
+    { "bufferView": 2, "componentType": 5126, "type": "VEC2", "count": 71214 },
+    { "bufferView": 3, "componentType": 5125, "type": "SCALAR", "count": 94080 }
   ],
   "bufferViews": [
-    {
-      "buffer": 0, "byteLength": 376320, "byteOffset": 0,
-      "name": "idx", "target": 34963
-    },
-    {
-      "buffer": 0, "byteLength": 501760, "byteOffset": 376320, "byteStride": 8,
-      "name": "tex", "target": 34962
-    },
-    {
-      "buffer": 0, "byteLength": 1505280, "byteOffset": 878080, "byteStride": 12,
-      "name": "vec", "target": 34962
-    }
-  ]
+    { "buffer": 0, "byteLength": 854568, "byteOffset": 0 },
+    { "buffer": 0, "byteLength": 854568, "byteOffset": 854568 },
+    { "buffer": 0, "byteLength": 569712, "byteOffset": 1709136 },
+    { "buffer": 0, "byteLength": 376320, "byteOffset": 2278848 }
+  ],
+  "buffers": [{ "uri": "bowl.bin", "byteLength": 2655168 }]
 }
-

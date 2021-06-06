@@ -16,7 +16,7 @@ import { PlaneBuilder } from '@babylonjs/core/Meshes/Builders/planeBuilder'
 import { LensRenderingPipeline } from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/lensRenderingPipeline'
 
 import { scene, camera } from './scene.js'
-import { floor, dice, bowlColliders } from './room.js'
+import { floor, dice, getDice, bowlColliders } from './room.js'
 import { getYaku, getFace } from './dice.js'
 
 const rand = () => Math.random() - 0.5
@@ -25,7 +25,7 @@ const millis = (d) => new Promise((resolve) => setTimeout(resolve, d))
 const diceOpt = { mass: 1, friction: 0.9, restitution: 0.8 } // bounce
 const staticOpts = { mass: 0, friction: 0.9, restitution: 0.8 }
 
-const initPhysics = () => {
+const initPhysics = async () => {
   const physics = new CannonJSPlugin()
   physics.world.allowSleep = true
   scene.enablePhysics(new Vector3(0, -9.81, 0), physics)
@@ -36,11 +36,13 @@ const initPhysics = () => {
     b.physicsImpostor = new PhysicsImpostor(b, PhysicsImpostor.BoxImpostor, staticOpts)
   })
 
-  dice.forEach((d) => {
+  const dc = await getDice()
+  dc.forEach((d) => {
     d.physicsImpostor = new PhysicsImpostor(d, PhysicsImpostor.BoxImpostor, diceOpt)
     d.physicsImpostor.physicsBody.allowSleep = true
     physics.sleepBody(d.physicsImpostor)
   })
+
   return physics
 }
 
@@ -90,7 +92,7 @@ export async function init () {
   bowlUI.addControl(rollDisplay)
   bowlUI.addControl(diceDisplay)
 
-  const physics = initPhysics()
+  const physics = await initPhysics()
 
   const handleResult = async (faces) => {
     const result = [0, 0, 0, 0, 0, 0]
@@ -129,7 +131,8 @@ export async function init () {
   const throwDice = () => {
     ++rollNumber
     nudgesLeft = 3
-    dice.slice(0, rollDice).forEach((d, i) => {
+    const current = dice.slice(0, rollDice)
+    current.forEach((d, i) => {
       d.position.x = rand() * 4
       d.position.z = rand() * 4
       d.position.y = 7 + i * 2
@@ -140,7 +143,7 @@ export async function init () {
     })
     nudgeDisplay.text = 'NUDGE' + `${nudgesLeft}`.padStart(2, '  ')
     observer = scene.onBeforeRenderObservable.add(() => {
-      const done = dice.every((d) => {
+      const done = current.every((d) => {
         if (d.physicsImpostor.physicsBody.sleepState === 2) return true
         if (d.position.y > 0) return false
         setTimeout(() => physics.sleepBody(d.physicsImpostor), 2000)
@@ -149,7 +152,7 @@ export async function init () {
       if (!done) return
       scene.onBeforeRenderObservable.remove(observer)
       observer = 0
-      handleResult(dice.map((d) => (d.position.y > 0) ? getFace(d) : 'out'))
+      handleResult(current.map((d) => (d.position.y > 0) ? getFace(d) : 'out'))
     })
   }
 
@@ -166,7 +169,7 @@ export async function init () {
         dice.forEach((d, i) => {
           d.position.x = 50
           d.position.z = i * 2
-          d.position.y = 0
+          d.position.y = -5
         })
         rollDisplay.text = 'ROLL:' + `${rollNumber}`.padStart(2, '  ')
         diceDisplay.text = `${rollDice} DICE`

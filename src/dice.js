@@ -21,7 +21,7 @@ export const getFace = (mesh, threshold = 0.85) => {
 
 export const getYaku = (result) => {
   const yaku = []
-  const [o, ho, ha, na, ti, nn] = result
+  const [ti, nn, o, ho, ha, na] = result
   if (ho > 1 && nn > 1) {
     yaku.push((ho > 2 && nn > 2) ? 'PONPONPON' : 'PONPON')
   }
