@@ -2,22 +2,20 @@ import '@babylonjs/core/Physics/physicsEngineComponent'
 import '@babylonjs/core/Rendering/depthRendererSceneComponent'
 
 import { PhysicsImpostor } from '@babylonjs/core/Physics/physicsImpostor'
-//import { AmmoJSPlugin } from '@babylonjs/core/Physics/Plugins/ammoJSPlugin'
-import { CannonJSPlugin } from '@babylonjs/core/Physics/Plugins/cannonJSPlugin'
 
-import { Vector3, Vector2 } from '@babylonjs/core/Maths/math.vector'
+import { Vector3 } from '@babylonjs/core/Maths/math.vector'
 import { PointerEventTypes } from '@babylonjs/core/Events/pointerEvents'
 
 import { AdvancedDynamicTexture } from '@babylonjs/gui/2D'
 import { TextBlock } from '@babylonjs/gui/2D/controls/textBlock'
 
-import { BoxBuilder } from '@babylonjs/core/Meshes/Builders/boxBuilder'
 import { PlaneBuilder } from '@babylonjs/core/Meshes/Builders/planeBuilder'
 import { LensRenderingPipeline } from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/lensRenderingPipeline'
 
 import { scene, camera } from './scene.js'
-import { floor, dice, getDice, bowlColliders } from './room.js'
+import { PhysicsPlugin } from './physics.js'
 import { getYaku, getFace } from './dice.js'
+import { floor, dice, getDice, bowlColliders } from './room.js'
 
 const rand = () => Math.random() - 0.5
 const millis = (d) => new Promise((resolve) => setTimeout(resolve, d))
@@ -26,10 +24,8 @@ const diceOpt = { mass: 1, friction: 0.9, restitution: 0.8 } // bounce
 const staticOpts = { mass: 0, friction: 0.9, restitution: 0.8 }
 
 const initPhysics = async () => {
-  const physics = new CannonJSPlugin()
-  physics.world.allowSleep = true
+  const physics = new PhysicsPlugin()
   scene.enablePhysics(new Vector3(0, -9.81, 0), physics)
-  scene.getPhysicsEngine().setSubTimeStep(5)
 
   floor.physicsImpostor = new PhysicsImpostor(floor, PhysicsImpostor.BoxImpostor, staticOpts)
   bowlColliders.forEach((b) => {
@@ -40,7 +36,7 @@ const initPhysics = async () => {
   dc.forEach((d) => {
     d.physicsImpostor = new PhysicsImpostor(d, PhysicsImpostor.BoxImpostor, diceOpt)
     d.physicsImpostor.physicsBody.allowSleep = true
-    physics.sleepBody(d.physicsImpostor)
+    d.physicsImpostor.sleep()
   })
 
   return physics
@@ -146,7 +142,7 @@ export async function init () {
       const done = current.every((d) => {
         if (d.physicsImpostor.physicsBody.sleepState === 2) return true
         if (d.position.y > 0) return false
-        setTimeout(() => physics.sleepBody(d.physicsImpostor), 2000)
+        setTimeout(() => d.physicsImpostor.sleep(), 2000)
         return false
       })
       if (!done) return
