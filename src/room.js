@@ -81,8 +81,8 @@ diceFaces.setEnabled(false)
 diceFaces.material = diceMaterial
 
 import('./models.js').then(async (m) => {
-  const { bowl, dice: dc } = await m.load()
-  const diceMesh = dc.meshes[1]
+  await m.ready
+  const diceMesh = m.models.dice.meshes[1]
   diceMesh.setEnabled(false)
   diceMesh.isVisible = false
   diceResolve(Array.from({ length: numDice }, (_, i) => {
@@ -94,5 +94,5 @@ import('./models.js').then(async (m) => {
     shadows.addShadowCaster(d)
     return d
   }))
-  shadows.addShadowCaster(bowl.meshes[1])
+  shadows.addShadowCaster(m.models.bowl.meshes[1])
 })

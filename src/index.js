@@ -6,4 +6,4 @@ engine.resize()
 engine.runRenderLoop(() => scene.render())
 
 window.addEventListener('resize', () => engine.resize())
-import('./app.js').then((m) => m.init(scene))
+import('./app.js').then((m) => m.init())

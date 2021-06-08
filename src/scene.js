@@ -13,9 +13,10 @@ scene.fogColor = Color3.Black()
 scene.fogMode = Scene.FOGMODE_EXP
 scene.fogDensity = 0.02
 
-export const camera = new ArcRotateCamera('camera', Math.PI / 6, Math.PI / 3, 25, Vector3.Zero())
+export const camera = new ArcRotateCamera('camera', 0.5, 1, 25, Vector3.Zero())
 camera.wheelPrecision = 10
 camera.upperBetaLimit = 1.4
 camera.lowerRadiusLimit = 3
 camera.upperRadiusLimit = 45
+camera.panningSensibility = 0
 camera.attachControl(canvas, true)
