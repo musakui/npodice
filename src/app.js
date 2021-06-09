@@ -1,39 +1,57 @@
 import '@babylonjs/core/Physics/physicsEngineComponent'
-import '@babylonjs/core/Rendering/depthRendererSceneComponent'
-
 import { PhysicsImpostor } from '@babylonjs/core/Physics/physicsImpostor'
 
 import { Vector3 } from '@babylonjs/core/Maths/math.vector'
-import { PointerEventTypes } from '@babylonjs/core/Events/pointerEvents'
+import { BoxBuilder } from '@babylonjs/core/Meshes/Builders/boxBuilder'
 
-import { AdvancedDynamicTexture } from '@babylonjs/gui/2D'
+import { AdvancedDynamicTexture } from '@babylonjs/gui/2D/advancedDynamicTexture'
 import { TextBlock } from '@babylonjs/gui/2D/controls/textBlock'
 
 import { PlaneBuilder } from '@babylonjs/core/Meshes/Builders/planeBuilder'
-import { LensRenderingPipeline } from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/lensRenderingPipeline'
 
-import { scene, camera } from './scene.js'
+import { rand } from './util.js'
 import { PhysicsPlugin } from './physics.js'
-import { getYaku, getFace } from './dice.js'
-import { floor, dice, getDice, bowlColliders } from './room.js'
+import { lensPipeline } from './supplement.js'
+import { camera, scene, floor } from './babylon.js'
+import { getYaku, getFace, createDice } from './dice.js'
 
-const rand = () => Math.random() - 0.5
-const millis = (d) => new Promise((resolve) => setTimeout(resolve, d))
-
+const dice = Array.from({ length: 10 }, (_, i) => createDice(i))
 const diceOpt = { mass: 1, friction: 0.9, restitution: 0.8 } // bounce
 const staticOpts = { mass: 0, friction: 0.9, restitution: 0.8 }
 
-const initPhysics = async () => {
+const initPhysics = () => {
   const physics = new PhysicsPlugin()
   scene.enablePhysics(new Vector3(0, -9.81, 0), physics)
 
-  floor.physicsImpostor = new PhysicsImpostor(floor, PhysicsImpostor.BoxImpostor, staticOpts)
-  bowlColliders.forEach((b) => {
+  const colliders = Array.from({ length: 12 }, (_, i) => {
+    const depth = 0.6
+    const r = i * 0.5 + 1.5
+    const width = i < 3 ? 0.5 : 1
+    const ht = Math.pow(i / 3.2, 2) * 0.18 + 0.39
+    const segments = Math.ceil(r * 2 * Math.PI / width)
+    const sAngle = Math.PI * 2 / segments
+    const tilt = i === 11 ? 2 : (-r / 12)
+    return Array.from({ length: segments }, (_, s) => {
+      const c = BoxBuilder.CreateBox(`base-${s}`, { width, height: 0.1, depth })
+      const a = s * sAngle
+      c.isVisible = false
+      c.rotation.y = a
+      c.rotation.x = tilt
+      c.position.y = ht
+      c.position.x = r * Math.sin(a)
+      c.position.z = r * Math.cos(a)
+      return c
+    })
+  }).flat()
+
+  colliders.unshift(BoxBuilder.CreateBox('cent', { width: 2.3, height: 0.9, depth: 2.3 }))
+  colliders[0].isVisible = false
+  colliders.unshift(floor)
+  colliders.forEach((b) => {
     b.physicsImpostor = new PhysicsImpostor(b, PhysicsImpostor.BoxImpostor, staticOpts)
   })
 
-  const dc = await getDice()
-  dc.forEach((d) => {
+  dice.forEach((d) => {
     d.physicsImpostor = new PhysicsImpostor(d, PhysicsImpostor.BoxImpostor, diceOpt)
     d.physicsImpostor.physicsBody.allowSleep = true
     d.physicsImpostor.sleep()
@@ -52,22 +70,15 @@ const textBlock = (opts) => {
   return txt
 }
 
-const lensPP = new LensRenderingPipeline('lens', {
-  edge_blur: 0.7,
-  grain_amount: 0.3,
-  dof_gain: 1.0,
-  dof_darken: 0.6,
-  dof_focus_distance: 90,
-  chromatic_aberration: 0.5,
-}, scene, 1.0, camera)
+initPhysics()
 
-export async function init () {
   let rollDice = 5
   let rollNumber = 1
   let nudgesLeft = 0
 
   let observer = false
 
+/*
   const finalDisplay = textBlock({ fontSize: 100, top: '0%' })
   const nudgeDisplay = textBlock({
     fontSize: 15,
@@ -76,6 +87,7 @@ export async function init () {
   })
   UI.addControl(finalDisplay)
   UI.addControl(nudgeDisplay)
+*/
 
   const bowlPlane = PlaneBuilder.CreatePlane('bowlPlane', { size: 10 })
   bowlPlane.rotation.x = Math.PI / 2
@@ -88,8 +100,6 @@ export async function init () {
   bowlUI.addControl(rollDisplay)
   bowlUI.addControl(diceDisplay)
 
-  const physics = await initPhysics()
-
   const handleResult = async (faces) => {
     const result = [0, 0, 0, 0, 0, 0]
     result.out = 0
@@ -99,12 +109,14 @@ export async function init () {
     yakus.sort((a, b) => a.length - b.length)
     console.log(result, yakus)
     rollDice = 5 + Math.max(0, yakus.length - 1)
+    /*
     for (const yaku of yakus) {
       finalDisplay.text = yaku
       await millis(1000)
     }
     await millis(1000)
     finalDisplay.text = ''
+    */
     observer = false
     let curFD = 20
     let curEB = 0
@@ -112,12 +124,12 @@ export async function init () {
       let done = true
       if (curFD <= 90) {
         done = false
-        lensPP.setFocusDistance(curFD)
+        lensPipeline.setFocusDistance(curFD)
         curFD += 4
       }
       if (curEB <= 0.9) {
         done = false
-        lensPP.setEdgeBlur(curEB)
+        lensPipeline.setEdgeBlur(curEB)
         curEB += 0.02
       }
       if (done) scene.onBeforeRenderObservable.remove(fadeIn)
@@ -137,7 +149,7 @@ export async function init () {
       d.physicsImpostor.setAngularVelocity(new Vector3(rand(), rand(), rand()))
       d.physicsImpostor.wakeUp()
     })
-    nudgeDisplay.text = 'NUDGE' + `${nudgesLeft}`.padStart(2, '  ')
+    // nudgeDisplay.text = 'NUDGE' + `${nudgesLeft}`.padStart(2, '  ')
     observer = scene.onBeforeRenderObservable.add(() => {
       const done = current.every((d) => {
         if (d.physicsImpostor.physicsBody.sleepState === 2) return true
@@ -149,19 +161,19 @@ export async function init () {
       scene.onBeforeRenderObservable.remove(observer)
       observer = 0
       handleResult(current.map((d) => (d.position.y > 0) ? getFace(d) : 'out'))
-    })
-  }
+  })
+}
 
-  scene.onPointerObservable.add((info) => {
-    if (info.type !== PointerEventTypes.POINTERDOWN) return
+const pointerHandler = (info) => {
+    if (info.type !== 1) return // PointerEventTypes.POINTERDOWN = 1
     if (info.event.button === 0) {
       if (observer === null) {
         rollDisplay.text = ''
         diceDisplay.text = ''
         throwDice()
       } else if (observer === false) {
-        lensPP.disableEdgeBlur()
-        lensPP.disableDepthOfField()
+        lensPipeline.disableEdgeBlur()
+        lensPipeline.disableDepthOfField()
         dice.forEach((d, i) => {
           d.position.x = 50
           d.position.z = i * 2
@@ -179,7 +191,13 @@ export async function init () {
         d.physicsImpostor.applyImpulse(direction, d.position)
       })
       --nudgesLeft
+      /*
       nudgeDisplay.text = 'NUDGE' + `${nudgesLeft}`.padStart(2, '  ')
+      */
     }
-  })
+}
+
+export const startRound = async () => {
+  camera.useAutoRotationBehavior = false
+  scene.onPointerObservable.add(pointerHandler)
 }

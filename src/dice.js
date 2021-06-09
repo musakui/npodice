@@ -1,4 +1,12 @@
-import { Vector3 } from '@babylonjs/core/Maths/math.vector'
+import '@babylonjs/core/Meshes/instancedMesh'
+import { Color3 } from '@babylonjs/core/Maths/math.color'
+import { Vector3, Vector4 } from '@babylonjs/core/Maths/math.vector'
+import { Texture } from '@babylonjs/core/Materials/Textures/texture'
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial'
+import { PolyhedronBuilder } from '@babylonjs/core/Meshes/Builders/polyhedronBuilder'
+
+import { shadows, diceModel } from './supplement.js'
+import diceDiffuseUrl from './assets/ohohanachin.png'
 
 export const getFace = (mesh, threshold = 0.85) => {
   const r = new Vector3(0, 0, 0)
@@ -39,4 +47,42 @@ export const getYaku = (result) => {
     }
   }
   return yaku
+}
+
+const side = 0.501
+const corner = 0.35
+const PN = [[1, 1], [-1, 1], [-1, -1], [1, -1]]
+const eight = [1, -1].map((s) => {
+  const vn = s < 0 ? PN : [PN[0], PN[3], PN[2], PN[1]]
+  return vn.map((vs) => [s * side, ...vs.map((i) => i * corner)])
+}).flat(1)
+
+const custom = {
+  face: [0, 1, 2, 3, 4, 5].map((i) => [0, 1, 2, 3].map((j) => j + i * 4)),
+  vertex: [0, 1, 2].map((i) => eight.map(([s, a, b]) => {
+    if (!i) return [ s, b, a ]
+    return i === 1 ? [ a, s, b ] : [ b, a, s ]
+  })).flat(1)
+}
+
+const faceUV = custom.face.map((_, i) => new Vector4((i + 1) / 6, 0, i / 6, 1))
+
+export const diceMaterial = new StandardMaterial('diceMat')
+diceMaterial.roughness = 1
+diceMaterial.specularColor = new Color3(0, 0, 0)
+diceMaterial.diffuseTexture = new Texture(diceDiffuseUrl)
+diceMaterial.diffuseTexture.hasAlpha = true
+
+const diceFaces = PolyhedronBuilder.CreatePolyhedron('dicek', { custom, faceUV })
+diceFaces.setEnabled(false)
+diceFaces.material = diceMaterial
+
+export const createDice = (idx) => {
+  const d = diceModel.createInstance(`d${idx}`)
+  const df = diceFaces.createInstance(`df${idx}`)
+  df.setParent(d)
+  d.position.z = idx * 2
+  d.position.y = -3
+  shadows.addShadowCaster(d)
+  return d
 }
