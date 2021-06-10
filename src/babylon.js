@@ -11,7 +11,7 @@ export const engine = new Engine(canvas, true, { preserveDrawingBuffer: true, st
 
 document.body.appendChild(canvas)
 engine.resize()
-window.addEventListener('resize', () => engine.resize())
+window.addEventListener('resize', () => engine.resize(), { passive: true })
 
 export const scene = new Scene(engine)
 scene.clearColor = Color3.Black()
