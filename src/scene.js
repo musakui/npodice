@@ -7,7 +7,8 @@ import { ShadowGenerator } from '@babylonjs/core/Lights/Shadows/shadowGenerator'
 import '@babylonjs/loaders/glTF/2.0/glTFLoader'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 
-import { scene, camera, spotlight } from './babylon.js'
+import { scene, camera } from './babylon.js'
+import { spotlight } from './room.js'
 import './dice.js'
 
 const rootUrl = import.meta.env.BASE_URL
@@ -43,3 +44,5 @@ export const ready = Promise.all([
     return d
   }),
 ])
+
+export * from './room.js'

@@ -8,7 +8,7 @@ startButton.onclick = () => {}
 
 import('./babylon.js').then(async () => {
   await Promise.all([
-    import('./supplement.js').then(async ({ ready }) => {
+    import('./scene.js').then(async ({ ready }) => {
       await ready
       header.style.backgroundColor = 'rgba(0,0,0,0)'
     }),

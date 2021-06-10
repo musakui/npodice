@@ -1,18 +1,22 @@
 import '@babylonjs/core/Physics/physicsEngineComponent'
 import { PhysicsImpostor } from '@babylonjs/core/Physics/physicsImpostor'
 
-import { Vector3 } from '@babylonjs/core/Maths/math.vector'
-import { BoxBuilder } from '@babylonjs/core/Meshes/Builders/boxBuilder'
-
 import { AdvancedDynamicTexture } from '@babylonjs/gui/2D/advancedDynamicTexture'
 import { TextBlock } from '@babylonjs/gui/2D/controls/textBlock'
 
 import { PlaneBuilder } from '@babylonjs/core/Meshes/Builders/planeBuilder'
 
+import {
+  Vector3,
+  BoxBuilder,
+  scene,
+  camera,
+  lensPipeline,
+  floor,
+} from './scene.js'
+
 import { rand } from './util.js'
 import { PhysicsPlugin } from './physics.js'
-import { lensPipeline } from './supplement.js'
-import { camera, scene, floor } from './babylon.js'
 import { getYaku, getFace, createDice } from './dice.js'
 
 const dice = Array.from({ length: 10 }, (_, i) => createDice(i))

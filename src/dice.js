@@ -1,11 +1,16 @@
 import '@babylonjs/core/Meshes/instancedMesh'
-import { Color3 } from '@babylonjs/core/Maths/math.color'
-import { Vector3, Vector4 } from '@babylonjs/core/Maths/math.vector'
-import { Texture } from '@babylonjs/core/Materials/Textures/texture'
-import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial'
+import { Vector4 } from '@babylonjs/core/Maths/math.vector'
 import { PolyhedronBuilder } from '@babylonjs/core/Meshes/Builders/polyhedronBuilder'
 
-import { shadows, diceModel } from './supplement.js'
+import {
+  Color3,
+  Vector3,
+  Texture,
+  StandardMaterial,
+  shadows,
+  diceModel,
+} from './scene.js'
+
 import diceDiffuseUrl from './assets/ohohanachin.png'
 
 export const getFace = (mesh, threshold = 0.85) => {
