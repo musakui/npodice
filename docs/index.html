@@ -7,45 +7,43 @@
   <meta name="theme-color" content="#000000" />
   <link rel="manifest" href="/npodice/manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>" />
-  <title>NpoDice</title>
-  <script src="/npodice/cannon.min.js"></script>
+  <title>NPODICE</title>
   <style>
-  html, body {
-    overflow: hidden; width: 100%; height: 100%; margin: 0; padding: 0;
-    font-family: monospace; color: #fff; background-color: #000;
-  }
-  canvas { width: 100%; height: 100%; touch-action: none; }
-  rect { fill: #eee; }
-  nav { position: fixed; padding: 10px; width: 100px; }
-  ul { display: none; clear: both; transition: max-height .2s ease-out; list-style: none; }
-  ul > li { position: relative; left: -40px; }
-  #togg { display: none; }
-  #togg:checked ~ ul { display: block; }
-  a {
-    display: block; margin: 10px; padding: 10px; width: 50px;
-    color: #fff; text-decoration: none; border: 2px solid white;
-  }
-  #app { position: absolute; margin: 0; height: 99vh; width: 99vw; pointer-events: none; }
+  html, body { width: 100%; height: 100%; margin: 0; background-color: #000 }
+  header { position: absolute; width: 100%; height: 100%; text-align: center; background-color: #000 }
+  .ld { padding: 10px; border: 2px solid #fff; background: rgba(0,0,0,0) }
+  nav rect { height: 10px; width: 80px; rx: 8; fill: #eee }
+  nav ul, #tog, #loading a { display: none }
+  nav { position: fixed; padding: 10px }
+  a { color: #aaa; text-decoration: none }
+  header h1 { margin-top: 35vh }
   </style>
- <script type="module" crossorigin src="/npodice/assets/index.9a28c714.js"></script>
-  <link rel="modulepreload" href="/npodice/assets/vendor.fe43ce37.js">
+ <script type="module" crossorigin src="/npodice/assets/index.67fce72c.js"></script>
+  <link rel="stylesheet" href="/npodice/assets/index.1cf121bc.css">
 </head>
  <body>
-   <nav role="navigation">
-     <input id="togg" type="checkbox" class="togg" />
-     <label class="hamburg" for="togg">
-       <svg viewBox="0 0 100 80" width="30" height="30">
-         <rect width="80" height="10" rx="8"></rect>
-         <rect width="80" height="10" rx="8" y="30"></rect>
-         <rect width="80" height="10" rx="8" y="60"></rect>
-       </svg>
-     </label>
-     <ul>
-       <li><a href="#">RULE</a></li>
-       <li><a href="https://github.com/musakui/npodice">SOURCE</a></li>
-     </ul>
-   </nav>
-   <div id="app"></div>
-   
+  <header>
+   <h1>NPODICE</h1>
+   <p>
+     based on <a href="https://store.steampowered.com/app/1510950/NKODICE/">NKODICE</a>
+     by <a href="https://twitter.com/mt_kuso">ksym</a>
+   </p>
+   <button class="ld running"><span></span>START</button>
+  </header>
+  <nav role="navigation">
+   <input id="tog" type="checkbox" />
+   <label for="tog">
+    <svg viewBox="0 0 80 80" width="25" height="25">
+     <rect></rect><rect y="30"></rect><rect y="60"></rect>
+    </svg>
+   </label>
+   <ul>
+    <li><a href="#">RULE</a></li>
+    <li><a href="https://github.com/musakui/npodice">SOURCE</a></li>
+   </ul>
+  </nav>
+  <main id="app"></main>
+  <script async src="/npodice/cannon.min.js"></script>
+  
  </body>
 </html>
