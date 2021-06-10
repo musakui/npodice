@@ -15,7 +15,7 @@ import {
   floor,
 } from './scene.js'
 
-import { rand } from './util.js'
+import { rand, millis } from './util.js'
 import { PhysicsPlugin } from './physics.js'
 import { getYaku, getFace, createDice } from './dice.js'
 
@@ -64,7 +64,7 @@ const initPhysics = () => {
   return physics
 }
 
-const UI = AdvancedDynamicTexture.CreateFullscreenUI('UI')
+const physics = initPhysics()
 
 const textBlock = (opts) => {
   const txt = new TextBlock()
@@ -74,25 +74,7 @@ const textBlock = (opts) => {
   return txt
 }
 
-initPhysics()
-
-  let rollDice = 5
-  let rollNumber = 1
-  let nudgesLeft = 0
-
-  let observer = false
-
-/*
-  const finalDisplay = textBlock({ fontSize: 100, top: '0%' })
-  const nudgeDisplay = textBlock({
-    fontSize: 15,
-    top: '45%', left: '-42%',
-    width: '100px', height: '30px',
-  })
-  UI.addControl(finalDisplay)
-  UI.addControl(nudgeDisplay)
-*/
-
+const createBowlDisplay = () => {
   const bowlPlane = PlaneBuilder.CreatePlane('bowlPlane', { size: 10 })
   bowlPlane.rotation.x = Math.PI / 2
   bowlPlane.rotation.y = -Math.PI / 2
@@ -104,104 +86,125 @@ initPhysics()
   bowlUI.addControl(rollDisplay)
   bowlUI.addControl(diceDisplay)
 
-  const handleResult = async (faces) => {
+  return async (roll, dice) => {
+    rollDisplay.text = 'ROLL:' + `${roll}`.padStart(2, '  ')
+    diceDisplay.text = `${dice} DICE`
+    await millis(1500)
+    rollDisplay.text = ''
+    diceDisplay.text = ''
+  }
+}
+
+const spinDownCamera = async () => {
+  let speed = camera.autoRotationBehavior.idleRotationSpeed
+  const oriSpeed = speed
+  while (speed > 0.001) {
+    speed *= 0.95
+    camera.autoRotationBehavior.idleRotationSpeed = speed
+    await millis(20)
+  }
+  camera.useAutoRotationBehavior = false
+}
+
+const bowlDisplay = createBowlDisplay()
+
+export const startRound = async (state = {}) => {
+  state.inRound = true
+  state.throwing = 0 // 0 - before, 1 - during, 2 - after, 3 - done
+  state.score = {}
+  state.nudges = 5
+  state.rolls = 3
+
+  state.rollDice = 5
+  state.rollNumber = 1
+  state.rollResult = null
+
+  let observePointer = null
+
+  const handleResult = async (dc) => {
     const result = [0, 0, 0, 0, 0, 0]
     result.out = 0
     result.nil = 0
-    faces.forEach((face) => ++result[face])
+    dc.forEach((d) => ++result[getFace(d)])
     const yakus = getYaku(result)
     yakus.sort((a, b) => a.length - b.length)
     console.log(result, yakus)
-    rollDice = 5 + Math.max(0, yakus.length - 1)
-    /*
+    state.rollResult = yakus
+
     for (const yaku of yakus) {
-      finalDisplay.text = yaku
-      await millis(1000)
+      await state?.showResult(yaku)
     }
-    await millis(1000)
-    finalDisplay.text = ''
-    */
-    observer = false
-    let curFD = 20
-    let curEB = 0
-    const fadeIn = scene.onBeforeRenderObservable.add(() => {
-      let done = true
-      if (curFD <= 90) {
-        done = false
-        lensPipeline.setFocusDistance(curFD)
-        curFD += 4
-      }
-      if (curEB <= 0.9) {
-        done = false
-        lensPipeline.setEdgeBlur(curEB)
-        curEB += 0.02
-      }
-      if (done) scene.onBeforeRenderObservable.remove(fadeIn)
-    })
+    if (yakus.length) { ++state.rolls }
+    state.nudges += yakus.length
+    state.rollDice = 5 + Math.max(0, yakus.length - 1)
+    await millis(2000)
+    state.throwing = 3
+
+    if (state.rolls < 1) {
+      scene.onPointerObservable.remove(observePointer)
+      camera.useAutoRotationBehavior = true
+      state.inRound = false
+      state?.done()
+      setTimeout(() => dice.forEach((d) => { d.position.y = -5 }), 100)
+    }
   }
 
   const throwDice = () => {
-    ++rollNumber
-    nudgesLeft = 3
-    const current = dice.slice(0, rollDice)
+    --state.rolls
+    ++state.rollNumber
+    state.throwing = 1
+    state.rollResult = null
+    const current = dice.slice(0, state.rollDice)
     current.forEach((d, i) => {
       d.position.x = rand() * 4
       d.position.z = rand() * 4
-      d.position.y = 7 + i * 2
+      d.position.y = 7 + i * 1.5
       d.rotation.z = rand() * Math.PI
       d.physicsImpostor.setLinearVelocity(new Vector3(rand(), rand(), rand()))
       d.physicsImpostor.setAngularVelocity(new Vector3(rand(), rand(), rand()))
       d.physicsImpostor.wakeUp()
     })
-    // nudgeDisplay.text = 'NUDGE' + `${nudgesLeft}`.padStart(2, '  ')
-    observer = scene.onBeforeRenderObservable.add(() => {
+
+    const observer = scene.onBeforeRenderObservable.add(() => {
       const done = current.every((d) => {
         if (d.physicsImpostor.physicsBody.sleepState === 2) return true
-        if (d.position.y > 0) return false
-        setTimeout(() => d.physicsImpostor.sleep(), 2000)
+        if (d.position.y <= 0) setTimeout(() => d.physicsImpostor.sleep(), 2000)
         return false
       })
       if (!done) return
       scene.onBeforeRenderObservable.remove(observer)
-      observer = 0
-      handleResult(current.map((d) => (d.position.y > 0) ? getFace(d) : 'out'))
-  })
-}
+      state.throwing = 2
+      handleResult(current)
+    })
+  }
 
-const pointerHandler = (info) => {
+  const pointerHandler = (info) => {
     if (info.type !== 1) return // PointerEventTypes.POINTERDOWN = 1
-    if (info.event.button === 0) {
-      if (observer === null) {
-        rollDisplay.text = ''
-        diceDisplay.text = ''
-        throwDice()
-      } else if (observer === false) {
-        lensPipeline.disableEdgeBlur()
-        lensPipeline.disableDepthOfField()
+    const { button } = info.event
+    if (button === 0) {
+      if (state.throwing === 0) return throwDice()
+      if (state.throwing === 3) {
         dice.forEach((d, i) => {
           d.position.x = 50
           d.position.z = i * 2
           d.position.y = -5
         })
-        rollDisplay.text = 'ROLL:' + `${rollNumber}`.padStart(2, '  ')
-        diceDisplay.text = `${rollDice} DICE`
-        observer = null
+        bowlDisplay(state.rollNumber, state.rollDice).then(() => {
+          state.throwing = 0
+        })
       }
-    } else if (info.event.button === 2 && observer && nudgesLeft > 0) {
+    } else if (button === 2 && state.throwing === 1 && state.nudges > 0) {
       dice.forEach((d) => {
-        if (d.position.y < 0) return
+        if (d.position.y < 0 || d.position.y > 4) return
         d.physicsImpostor.wakeUp()
         const direction = new Vector3(rand(), 2 + 5 * Math.random(), rand())
         d.physicsImpostor.applyImpulse(direction, d.position)
       })
-      --nudgesLeft
-      /*
-      nudgeDisplay.text = 'NUDGE' + `${nudgesLeft}`.padStart(2, '  ')
-      */
+      --state.nudges
     }
-}
+  }
 
-export const startRound = async () => {
-  camera.useAutoRotationBehavior = false
-  scene.onPointerObservable.add(pointerHandler)
+  await spinDownCamera()
+  await bowlDisplay(state.rollNumber, state.rollDice)
+  observePointer = scene.onPointerObservable.add(pointerHandler)
 }

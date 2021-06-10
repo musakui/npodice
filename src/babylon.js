@@ -26,7 +26,6 @@ camera.lowerRadiusLimit = 3
 camera.upperRadiusLimit = 45
 camera.panningSensibility = 0
 camera.useAutoRotationBehavior = true
-camera.idleRotationWaitTime = 2000
 camera.attachControl(canvas, true)
 
 engine.runRenderLoop(() => scene.render())

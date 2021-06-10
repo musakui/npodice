@@ -14,6 +14,8 @@ import {
 import diceDiffuseUrl from './assets/ohohanachin.png'
 
 export const getFace = (mesh, threshold = 0.85) => {
+  if (mesh.position.y <= 0) return 'out'
+
   const r = new Vector3(0, 0, 0)
   const q = mesh.rotationQuaternion
 

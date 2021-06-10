@@ -50,6 +50,26 @@ header {
   pointer-events: none;
 }
 
+#result {
+  position: absolute;
+  width: 99vw;
+  height: 80vh;
+  pointer-events: none;
+  margin-top: 30vh;
+  font-size: 30vh;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#result.show {
+  animation: marquee 3s linear;
+}
+
+@keyframes marquee {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-200%); }
+}
+
 .ld {
   color: #fff;
   position: relative;
