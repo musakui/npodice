@@ -47,7 +47,6 @@ header {
   width: 99vw;
   height: 99vh;
   margin: 0;
-  pointer-events: none;
 }
 
 #result {

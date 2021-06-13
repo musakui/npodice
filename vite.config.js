@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 
 import { visualizer } from 'rollup-plugin-visualizer'
 const vis = visualizer({
@@ -9,6 +10,9 @@ const vis = visualizer({
 
 export default defineConfig({
   base: '/npodice/',
+  plugins: [
+    vue(),
+  ],
   build: {
     chunkSizeWarningLimit: 800,
     rollupOptions: {
