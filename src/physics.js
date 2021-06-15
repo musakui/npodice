@@ -1,15 +1,15 @@
+const CANNON = window.CANNON
 const epsCheck = (n) => n < 0.001 ? 0.001 : n
 
 export class PhysicsPlugin {
 
-  constructor(_useDeltaForWorldStep = false, iterations = 10) {
-    this.BJSCANNON = CANNON
-    this._physicsMaterials = []
-    this.world = new this.BJSCANNON.World()
+  constructor () {
+    this._materials = []
+    this._fixedTimeStep = 1
+    this.world = new CANNON.World()
     this.world.allowSleep = true
-    this.world.solver.iterations = iterations
-    this.world.broadphase = new this.BJSCANNON.NaiveBroadphase()
-    this._useDeltaForWorldStep = _useDeltaForWorldStep
+    this.world.solver.iterations = 10
+    this.world.broadphase = new CANNON.NaiveBroadphase()
   }
 
   isSupported () {
@@ -17,7 +17,7 @@ export class PhysicsPlugin {
   }
 
   executeStep (delta, impostors) {
-    this.world.step(this._useDeltaForWorldStep ? delta : (delta * 0.5))
+    this.world.step(delta * this._fixedTimeStep)
   }
 
   setTimeStep (timestep) {
@@ -58,18 +58,18 @@ export class PhysicsPlugin {
   }
 
   applyImpulse(impostor, f, p) {
-    impostor.physicsBody.applyImpulse(new this.BJSCANNON.Vec3(f.x, f.y, f.z), new this.BJSCANNON.Vec3(p.x, p.y, p.z))
+    impostor.physicsBody.applyImpulse(new CANNON.Vec3(f.x, f.y, f.z), new CANNON.Vec3(p.x, p.y, p.z))
   }
 
   generatePhysicsBody (impostor) {
     if (impostor.isBodyInitRequired()) {
       const box = impostor.getObjectExtendSize().scale(0.5)
-      const size = new this.BJSCANNON.Vec3(epsCheck(box.x), epsCheck(box.y), epsCheck(box.z))
-      impostor.physicsBody = new this.BJSCANNON.Body({
+      const size = new CANNON.Vec3(epsCheck(box.x), epsCheck(box.y), epsCheck(box.z))
+      impostor.physicsBody = new CANNON.Body({
         mass: impostor.getParam('mass'),
         material: this._addMaterial("mat-" + impostor.uniqueId, impostor.getParam('friction'), impostor.getParam('restitution')),
       })
-      impostor.physicsBody.addShape(new this.BJSCANNON.Box(size))
+      impostor.physicsBody.addShape(new CANNON.Box(size))
       impostor.physicsBody.addEventListener('collide', impostor.onCollide)
       this.world.addEventListener('preStep', impostor.beforeStep)
       this.world.addEventListener('postStep', impostor.afterStep)
@@ -82,15 +82,15 @@ export class PhysicsPlugin {
 
   _addMaterial (name, friction, restitution) {
     let index, mat
-    for (index = 0; index < this._physicsMaterials.length; ++index) {
-      mat = this._physicsMaterials[index]
+    for (index = 0; index < this._materials.length; ++index) {
+      mat = this._materials[index]
       if (mat.friction === friction && mat.restitution === restitution) return mat
     }
 
-    const currentMat = new this.BJSCANNON.Material(name)
+    const currentMat = new CANNON.Material(name)
     currentMat.friction = friction
     currentMat.restitution = restitution
-    this._physicsMaterials.push(currentMat)
+    this._materials.push(currentMat)
     return currentMat
   }
 }
