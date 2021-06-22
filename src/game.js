@@ -69,7 +69,7 @@ dice.hide = () => dice.forEach((d, i) => {
   d.position.y = -5
 })
 
-dice.initThrow = (num) => dice.slice(0, num).map((d, i) => {
+const initThrow = (num) => dice.slice(0, num).map((d, i) => {
   d.position.x = rand() * 4
   d.position.z = rand() * 4
   d.position.y = 7 + i * 1.5
@@ -86,6 +86,30 @@ dice.nudge = () => dice.forEach((d) => {
   const direction = new Vector3(rand(), 2 + 5 * Math.random(), rand())
   d.physicsImpostor.applyImpulse(direction, d.position)
 })
+
+dice.throwDice = (num) => {
+  const current = initThrow(num)
+  const isDone = () => current.every((d) => {
+    if (d.physicsImpostor.physicsBody.sleepState === 2) return true
+    if (d.position.y <= 0) setTimeout(() => d.physicsImpostor.sleep(), 2000)
+    return false
+  })
+
+  current.done = () => new Promise((resolve) => {
+    const observer = scene.onBeforeRenderObservable.add(() => {
+      if (!isDone()) return
+      scene.onBeforeRenderObservable.remove(observer)
+      const result = [0, 0, 0, 0, 0, 0]
+      result.out = 0
+      result.nil = 0
+      current.forEach((d) => ++result[getFace(d)])
+      const yakus = getYaku(result)
+      yakus.sort((a, b) => a.length - b.length)
+      resolve({ result, yakus })
+    })
+  })
+  return current
+}
 
 export const staticObjects = createStaticObjects()
 staticObjects.forEach((b) => {
@@ -129,6 +153,17 @@ const createBowlDisplay = () => {
   }
 }
 
+const usePointer = (handler) => {
+  const observePointer = scene.onPointerObservable.add((info) => {
+    if (info.type === 1) handler(info.event.button)
+  })
+  return () => scene.onPointerObservable.remove(observePointer)
+}
+
+const spinUpCamera = () => {
+  camera.useAutoRotationBehavior = true
+}
+
 const spinDownCamera = async () => {
   let speed = camera.autoRotationBehavior.idleRotationSpeed
   const oriSpeed = speed
@@ -140,94 +175,9 @@ const spinDownCamera = async () => {
   camera.useAutoRotationBehavior = false
 }
 
-const bowlDisplay = createBowlDisplay()
-
-export const startRound = async (state = {}) => {
-  state.inRound = true
-  state.throwing = null // 0 - before, 1 - during, 2 - after, 3 - done
-  state.score = {}
-  state.nudges = 5
-  state.rolls = 3
-
-  state.rollDice = 5
-  state.rollNumber = 1
-  state.rollResult = null
-
-  let observePointer = null
-
-  const handleResult = async (dc) => {
-    const result = [0, 0, 0, 0, 0, 0]
-    result.out = 0
-    result.nil = 0
-    dc.forEach((d) => ++result[getFace(d)])
-    const yakus = getYaku(result)
-    yakus.sort((a, b) => a.length - b.length)
-    console.log(result, yakus)
-    state.rollResult = yakus
-
-    for (const yaku of yakus) {
-      await state?.showResult(yaku)
-    }
-    if (yakus.length) { ++state.rolls }
-    state.nudges += yakus.length
-    state.rollDice = 5 + Math.max(0, yakus.length - 1)
-    await millis(2000)
-    state.throwing = 3
-
-    if (state.rolls < 1) {
-      scene.onPointerObservable.remove(observePointer)
-      camera.useAutoRotationBehavior = true
-      state.inRound = false
-      state?.done()
-      setTimeout(() => dice.hide(), 100)
-    }
-  }
-
-  const throwDice = () => {
-    --state.rolls
-    ++state.rollNumber
-    state.throwing = 1
-    state.rollResult = null
-    setTimeout(() => physics.setTimeStep(1), 5000)
-    const current = dice.initThrow(state.rollDice)
-    const observer = scene.onBeforeRenderObservable.add(() => {
-      const done = current.every((d) => {
-        if (d.physicsImpostor.physicsBody.sleepState === 2) return true
-        if (d.position.y <= 0) setTimeout(() => d.physicsImpostor.sleep(), 2000)
-        return false
-      })
-      if (!done) return
-      scene.onBeforeRenderObservable.remove(observer)
-      state.throwing = 2
-      physics.setTimeStep(0.5)
-      handleResult(current)
-    })
-  }
-
-  const pointerHandler = (info) => {
-    if (info.type !== 1) return // PointerEventTypes.POINTERDOWN = 1
-    const { button } = info.event
-    if (button === 0) {
-      if (state.throwing === 0) return throwDice()
-      if (state.throwing === 3) {
-        dice.hide()
-        bowlDisplay.show(state.rollNumber, state.rollDice)
-        setTimeout(() => {
-          state.throwing = 0
-          bowlDisplay.hide()
-        }, 2000)
-      }
-    } else if (button === 2 && state.throwing === 1 && state.nudges > 0) {
-      dice.nudge()
-      --state.nudges
-    }
-  }
-
-  await spinDownCamera()
-  await bowlDisplay.show(state.rollNumber, state.rollDice)
-  setTimeout(() => {
-    state.throwing = 0
-    bowlDisplay.hide()
-  }, 2000)
-  observePointer = scene.onPointerObservable.add(pointerHandler)
+export const view = {
+  usePointer,
+  spinUpCamera,
+  spinDownCamera,
+  bowl: createBowlDisplay(),
 }

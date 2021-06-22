@@ -13,7 +13,14 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { startRound } from './game.js'
+
+import {
+  view,
+  dice,
+  physics,
+} from './game.js'
+
+import { millis } from './util.js'
 
 const result = ref(null)
 const text = ref('')
@@ -36,17 +43,67 @@ const state = reactive({
   inRound: false,
   rolls: 3,
   nudges: 5,
-  showResult,
-  done: () => {
-    header.style.marginTop = 0
-    root.classList.remove('inactive')
-  },
 })
 
-const start = () => {
+const throwDice = async () => {
+  --state.rolls
+  ++state.rollNumber
+  const current = dice.throwDice(state.rollDice)
+  const stopNudge = view.usePointer((button) => {
+    if (button !== 2) return
+    dice.nudge()
+    --state.nudges
+  })
+  setTimeout(() => physics.setTimeStep(1), 5000)
+  const { result, yakus } = await current.done()
+  stopNudge()
+
+  physics.setTimeStep(0.5)
+  console.log(result, yakus)
+  for (const yaku of yakus) {
+    await showResult(yaku)
+  }
+  if (yakus.length) { ++state.rolls }
+  state.nudges += yakus.length
+  state.rollDice = 5 + Math.max(0, yakus.length - 1)
+  await millis(2000)
+  const stop = view.usePointer((button) => {
+    if (button !== 0) return
+    stop()
+    dice.hide()
+    beforeThrow()
+  })
+
+  if (state.rolls < 1) {
+    view.spinUpCamera()
+    state.inRound = false
+    header.style.marginTop = 0
+    root.classList.remove('inactive')
+    setTimeout(() => dice.hide(), 100)
+  }
+}
+
+const start = async () => {
   header.style.marginTop = '-100%'
-  startRound(state)
   root.classList.add('inactive')
+  state.inRound = true
+  state.rolls = 3
+  state.nudges = 5
+  state.rollDice = 5
+  state.rollNumber = 1
+  await view.spinDownCamera()
+  await beforeThrow()
+}
+
+async function beforeThrow () {
+  await view.bowl.show(state.rollNumber, state.rollDice)
+  await millis(2000)
+  view.bowl.hide()
+  const stop = view.usePointer((button) => {
+    if (button !== 0) return
+    stop()
+    throwDice()
+  })
 }
 
 const startButton = document.querySelector('.ld')
