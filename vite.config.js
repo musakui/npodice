@@ -14,6 +14,7 @@ export default defineConfig({
     vue(),
   ],
   build: {
+    cssCodeSplit: false,
     chunkSizeWarningLimit: 800,
     rollupOptions: {
       plugins: [
